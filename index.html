@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f2419">
+<title>Satélite — Fazenda Santa Rosa</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+  :root{
+    --solo: #1a1410;
+    --solo-2: #241c16;
+    --talhao: #0f2419;
+    --talhao-2: #16331f;
+    --folha: #6fae4f;
+    --folha-escura: #3f7a34;
+    --alerta: #c97a2b;
+    --papel: #f4efe4;
+    --papel-fraco: #cfc6b3;
+    --linha: rgba(244,239,228,0.12);
+    --radius: 14px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+    background:
+      radial-gradient(circle at 15% 0%, var(--talhao-2) 0%, transparent 45%),
+      linear-gradient(180deg, var(--solo) 0%, var(--solo-2) 100%);
+    color:var(--papel);
+    min-height:100%;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  header{
+    padding:20px 18px 14px;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    border-bottom:1px solid var(--linha);
+  }
+  .titulo-eyebrow{
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--folha);
+    font-weight:600;
+    margin:0 0 4px;
+  }
+  h1{
+    font-size:22px;
+    margin:0;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  .sub{
+    font-size:13px;
+    color:var(--papel-fraco);
+    margin-top:4px;
+  }
+  #btnInstalar{
+    background:var(--folha-escura);
+    color:var(--papel);
+    border:none;
+    padding:9px 14px;
+    border-radius:10px;
+    font-size:13px;
+    font-weight:600;
+    white-space:nowrap;
+    display:none;
+  }
+  #btnInstalar.mostrar{ display:inline-flex; align-items:center; gap:6px; }
+
+  main{ padding:16px; max-width:640px; margin:0 auto; }
+
+  .abas{
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+    background:rgba(0,0,0,0.25);
+    padding:4px;
+    border-radius:12px;
+  }
+  .aba{
+    flex:1;
+    text-align:center;
+    padding:10px 8px;
+    border-radius:9px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--papel-fraco);
+    border:none;
+    background:transparent;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .aba.ativa{
+    background:var(--talhao-2);
+    color:var(--folha);
+  }
+
+  .visor{
+    position:relative;
+    border-radius:var(--radius);
+    overflow:hidden;
+    background:var(--talhao);
+    border:1px solid var(--linha);
+    aspect-ratio:1/1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .visor img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .estado{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    text-align:center;
+    padding:24px;
+  }
+  .spinner{
+    width:34px; height:34px;
+    border-radius:50%;
+    border:3px solid var(--linha);
+    border-top-color:var(--folha);
+    animation:girar 0.9s linear infinite;
+  }
+  @keyframes girar{ to{ transform:rotate(360deg); } }
+  .estado p{ font-size:13px; color:var(--papel-fraco); margin:0; max-width:320px; }
+  .estado .icone{ font-size:26px; }
+  .estado .detalhe-tecnico{
+    font-size:11px;
+    color:var(--papel-fraco);
+    opacity:0.7;
+    max-width:320px;
+    word-break:break-word;
+    font-family:monospace;
+    margin-top:2px;
+  }
+  .estado button{
+    margin-top:4px;
+    background:var(--folha-escura);
+    color:var(--papel);
+    border:none;
+    padding:8px 16px;
+    border-radius:9px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+  }
+
+  .rodape-visor{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:10px;
+    font-size:12px;
+    color:var(--papel-fraco);
+  }
+  .badge-offline{
+    display:none;
+    align-items:center;
+    gap:5px;
+    background:rgba(201,122,43,0.18);
+    color:var(--alerta);
+    padding:3px 9px;
+    border-radius:20px;
+    font-weight:600;
+  }
+  .badge-offline.mostrar{ display:inline-flex; }
+  .badge-offline::before{ content:"●"; font-size:8px; }
+
+  .legenda{
+    margin-top:18px;
+    background:rgba(0,0,0,0.2);
+    border:1px solid var(--linha);
+    border-radius:var(--radius);
+    padding:14px 16px;
+  }
+  .legenda h2{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--papel-fraco);
+    margin:0 0 10px;
+    font-weight:700;
+  }
+  .escala{
+    display:flex;
+    height:10px;
+    border-radius:6px;
+    overflow:hidden;
+    margin-bottom:6px;
+  }
+  .escala span{ flex:1; }
+  .escala-labels{
+    display:flex;
+    justify-content:space-between;
+    font-size:11px;
+    color:var(--papel-fraco);
+  }
+  #painelLegendaNdvi{ display:none; }
+  #painelLegendaNdvi.mostrar{ display:block; }
+  #painelLegendaRgb{ display:block; }
+  #painelLegendaRgb.esconder{ display:none; }
+
+  .refresh-btn{
+    width:100%;
+    margin-top:16px;
+    background:transparent;
+    border:1px solid var(--linha);
+    color:var(--papel);
+    padding:12px;
+    border-radius:11px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
+  .refresh-btn:active{ background:rgba(255,255,255,0.05); }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <p class="titulo-eyebrow">Copernicus · Sentinel-2</p>
+    <h1>Fazenda Santa Rosa</h1>
+    <p class="sub" id="dataAtualizacao">Carregando última imagem…</p>
+  </div>
+  <button id="btnInstalar">⭳ Instalar</button>
+</header>
+
+<main>
+  <div class="abas">
+    <button class="aba ativa" data-tipo="rgb">Imagem real</button>
+    <button class="aba" data-tipo="ndvi">Vegetação (NDVI)</button>
+  </div>
+
+  <div class="visor" id="visor">
+    <img id="imgSatelite" alt="Imagem de satélite da Fazenda Santa Rosa" style="display:none;">
+    <div class="estado" id="estadoCarregando">
+      <div class="spinner"></div>
+      <p>Buscando imagem mais recente do Sentinel-2…</p>
+    </div>
+    <div class="estado" id="estadoErro" style="display:none;">
+      <div class="icone">⚠️</div>
+      <p id="mensagemErro">Não foi possível buscar a imagem agora.</p>
+      <p class="detalhe-tecnico" id="detalheErro"></p>
+      <button onclick="carregarImagem(tipoAtual, true)">Tentar novamente</button>
+    </div>
+  </div>
+
+  <div class="rodape-visor">
+    <span id="fonteImagem">—</span>
+    <span class="badge-offline" id="badgeOffline">offline · última salva</span>
+  </div>
+
+  <div class="legenda">
+    <div id="painelLegendaRgb">
+      <h2>O que você está vendo</h2>
+      <p class="sub" style="margin:0;">Imagem em cor natural, como o olho humano veria a área da fazenda a partir do espaço.</p>
+    </div>
+    <div id="painelLegendaNdvi">
+      <h2>Índice de vegetação (NDVI)</h2>
+      <div class="escala">
+        <span style="background:#a6a6a6"></span>
+        <span style="background:#cc3333"></span>
+        <span style="background:#e6b333"></span>
+        <span style="background:#99cc33"></span>
+        <span style="background:#1a991a"></span>
+      </div>
+      <div class="escala-labels">
+        <span>Sem dados</span>
+        <span>Solo exposto</span>
+        <span>Vegetação densa</span>
+      </div>
+    </div>
+  </div>
+
+  <button class="refresh-btn" id="btnAtualizar">↻ Atualizar imagem</button>
+</main>
+
+<script>
+/* ============================================================
+   CONFIGURAÇÃO — Proxy (Vercel) para o Copernicus Data Space
+   ============================================================
+   As credenciais saíram do client-side e agora ficam só no
+   servidor do proxy (ver pasta proxy/ e seu README).
+   Troque a URL abaixo pela URL do seu projeto Vercel depois do
+   deploy do proxy.
+============================================================ */
+const PROXY_URL = "https://SEU-PROJETO.vercel.app";
+
+const CHAVE_CACHE_LOCAL = 'ultima-imagem-satelite';
+let tipoAtual = 'rgb';
+let deferredInstallPrompt = null;
+
+const imgEl = document.getElementById('imgSatelite');
+const estadoCarregando = document.getElementById('estadoCarregando');
+const estadoErro = document.getElementById('estadoErro');
+const mensagemErro = document.getElementById('mensagemErro');
+const detalheErro = document.getElementById('detalheErro');
+const dataAtualizacao = document.getElementById('dataAtualizacao');
+const fonteImagem = document.getElementById('fonteImagem');
+const badgeOffline = document.getElementById('badgeOffline');
+const painelRgb = document.getElementById('painelLegendaRgb');
+const painelNdvi = document.getElementById('painelLegendaNdvi');
+
+document.querySelectorAll('.aba').forEach(botao => {
+  botao.addEventListener('click', () => {
+    document.querySelectorAll('.aba').forEach(b => b.classList.remove('ativa'));
+    botao.classList.add('ativa');
+    tipoAtual = botao.dataset.tipo;
+    painelRgb.classList.toggle('esconder', tipoAtual !== 'rgb');
+    painelNdvi.classList.toggle('mostrar', tipoAtual === 'ndvi');
+    carregarImagem(tipoAtual, false);
+  });
+});
+
+document.getElementById('btnAtualizar').addEventListener('click', () => carregarImagem(tipoAtual, true));
+
+async function buscarImagemSentinel(tipo) {
+  const resp = await fetch(`${PROXY_URL}/api/satelite?tipo=${tipo}`);
+
+  if (!resp.ok) {
+    const texto = await resp.text().catch(() => '');
+    throw new Error(`Proxy (${resp.status}): ${texto}`);
+  }
+
+  return await resp.blob();
+}
+
+async function carregarImagem(tipo, forcar) {
+  mostrarCarregando();
+  try {
+    const blob = await buscarImagemSentinel(tipo);
+    const url = URL.createObjectURL(blob);
+    imgEl.src = url;
+    imgEl.style.display = 'block';
+    estadoCarregando.style.display = 'none';
+    estadoErro.style.display = 'none';
+    badgeOffline.classList.remove('mostrar');
+
+    const agora = new Date();
+    dataAtualizacao.textContent = `Atualizado às ${agora.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})} · ${agora.toLocaleDateString('pt-BR')}`;
+    fonteImagem.textContent = tipo === 'ndvi' ? 'Sentinel-2 · NDVI' : 'Sentinel-2 · Cor natural';
+
+    salvarFallbackOffline(tipo, blob, agora.toISOString());
+  } catch (e) {
+    const fallback = lerFallbackOffline(tipo);
+    if (fallback) {
+      imgEl.src = fallback.dataUrl;
+      imgEl.style.display = 'block';
+      estadoCarregando.style.display = 'none';
+      estadoErro.style.display = 'none';
+      badgeOffline.classList.add('mostrar');
+      const dataSalva = new Date(fallback.data);
+      dataAtualizacao.textContent = `Última imagem salva · ${dataSalva.toLocaleDateString('pt-BR')}`;
+    } else {
+      estadoCarregando.style.display = 'none';
+      estadoErro.style.display = 'flex';
+      mensagemErro.textContent = 'Não foi possível buscar a imagem e não há nenhuma salva ainda.';
+      detalheErro.textContent = e.message || String(e);
+    }
+  }
+}
+
+function mostrarCarregando() {
+  imgEl.style.display = 'none';
+  estadoErro.style.display = 'none';
+  estadoCarregando.style.display = 'flex';
+}
+
+function salvarFallbackOffline(tipo, blob, dataIso) {
+  const leitor = new FileReader();
+  leitor.onload = () => {
+    try {
+      const registro = JSON.parse(localStorage.getItem(CHAVE_CACHE_LOCAL) || '{}');
+      registro[tipo] = { dataUrl: leitor.result, data: dataIso };
+      localStorage.setItem(CHAVE_CACHE_LOCAL, JSON.stringify(registro));
+    } catch (e) { /* localStorage indisponível — sem fallback offline, não é crítico */ }
+  };
+  leitor.readAsDataURL(blob);
+}
+
+function lerFallbackOffline(tipo) {
+  try {
+    const registro = JSON.parse(localStorage.getItem(CHAVE_CACHE_LOCAL) || '{}');
+    return registro[tipo] || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// --- PWA: instalação e service worker ---
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  document.getElementById('btnInstalar').classList.add('mostrar');
+});
+
+document.getElementById('btnInstalar').addEventListener('click', async () => {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  document.getElementById('btnInstalar').classList.remove('mostrar');
+});
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
+carregarImagem(tipoAtual, false);
+</script>
+</body>
+</html>
